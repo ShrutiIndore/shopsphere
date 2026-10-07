@@ -39,7 +39,7 @@ function App() {
 
   // Get products from Spring Boot backend
 useEffect(() => {
-  fetch("http://localhost:8080/api/products")
+  fetch("https://shopsphere-backend-wo31.onrender.com/api/products")
     .then((response) => response.json())
     .then((data) => {
       setProducts(data);
