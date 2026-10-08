@@ -15,7 +15,7 @@ function App() {
   // Search
   const [search, setSearch] = useState("");
 
-  //Products from backend
+  // Products from backend
   const [products, setProducts] = useState([]);
 
   // Category
@@ -29,6 +29,11 @@ function App() {
 
   const [orderPlaced, setOrderPlaced] = useState(false);
 
+  // Customer details
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
+
   // Save cart to localStorage
   useEffect(() => {
     localStorage.setItem(
@@ -38,16 +43,21 @@ function App() {
   }, [cart]);
 
   // Get products from Spring Boot backend
-useEffect(() => {
-  fetch("https://shopsphere-backend-wo31.onrender.com/api/products")
-    .then((response) => response.json())
-    .then((data) => {
-      setProducts(data);
-    })
-    .catch((error) => {
-      console.error("Error fetching products:", error);
-    });
-}, []);
+  useEffect(() => {
+    fetch(
+      "https://shopsphere-backend-wo31.onrender.com/api/products"
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        setProducts(data);
+      })
+      .catch((error) => {
+        console.error(
+          "Error fetching products:",
+          error
+        );
+      });
+  }, []);
 
   // Add product to cart
   const addToCart = (product) => {
@@ -92,7 +102,10 @@ useEffect(() => {
 
   // Remove product from cart
   const removeFromCart = (index) => {
-    const newCart = cart.filter((_, i) => i !== index);
+    const newCart = cart.filter(
+      (_, i) => i !== index
+    );
+
     setCart(newCart);
   };
 
@@ -108,7 +121,8 @@ useEffect(() => {
 
   // Total cart items
   const totalItems = cart.reduce(
-    (total, item) => total + item.quantity,
+    (total, item) =>
+      total + item.quantity,
     0
   );
 
@@ -118,6 +132,62 @@ useEffect(() => {
       total + item.price * item.quantity,
     0
   );
+
+ // Place order
+const placeOrder = async () => {
+  if (!customerName.trim() || !customerEmail.trim() || !customerAddress.trim()) {
+    alert("Please fill in your name, email, and address.");
+    return;
+  }
+
+  if (cart.length === 0) {
+    alert("Your cart is empty. Please add a product first.");
+    return;
+  }
+
+  const order = {
+    customerName: customerName.trim(),
+    customerEmail: customerEmail.trim(),
+    address: customerAddress.trim(),
+    totalAmount: totalPrice,
+    status: "PLACED",
+  };
+
+  console.log("Sending order:", order);
+
+  try {
+    const response = await fetch(
+      "https://shopsphere-backend-wo31.onrender.com/api/orders",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(order),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || `Request failed: ${response.status}`);
+    }
+
+    const savedOrder = await response.json();
+
+    console.log("Order saved successfully:", savedOrder);
+
+    setOrderPlaced(true);
+    setCart([]);
+    setShowCheckout(false);
+
+    setCustomerName("");
+    setCustomerEmail("");
+    setCustomerAddress("");
+  } catch (error) {
+    console.error("Error placing order:", error);
+    alert("Order failed. Please check the browser console and try again.");
+  }
+};
 
   return (
     <>
@@ -153,25 +223,33 @@ useEffect(() => {
       {/* Category Filter */}
       <div className="category-filter">
         <button
-          onClick={() => setCategory("All")}
+          onClick={() =>
+            setCategory("All")
+          }
         >
           All
         </button>
 
         <button
-          onClick={() => setCategory("Laptop")}
+          onClick={() =>
+            setCategory("Laptop")
+          }
         >
           Laptop
         </button>
 
         <button
-          onClick={() => setCategory("Accessories")}
+          onClick={() =>
+            setCategory("Accessories")
+          }
         >
           Accessories
         </button>
 
         <button
-          onClick={() => setCategory("Monitor")}
+          onClick={() =>
+            setCategory("Monitor")
+          }
         >
           Monitor
         </button>
@@ -210,26 +288,32 @@ useEffect(() => {
           <input
             type="text"
             placeholder="Enter your name"
+            value={customerName}
+            onChange={(e) =>
+              setCustomerName(e.target.value)
+            }
           />
 
           <input
-            type="tel"
-            placeholder="Enter phone number"
+            type="email"
+            placeholder="Enter email"
+            value={customerEmail}
+            onChange={(e) =>
+              setCustomerEmail(e.target.value)
+            }
           />
 
           <textarea
             placeholder="Enter delivery address"
+            value={customerAddress}
+            onChange={(e) =>
+              setCustomerAddress(e.target.value)
+            }
           ></textarea>
 
-          <button
-            onClick={() => {
-            setOrderPlaced(true);
-            setCart([]);
-            setShowCheckout(false);
-          }}
->
+          <button onClick={placeOrder}>
           Place Order
-        </button>
+          </button>
 
           <button
             onClick={() =>
@@ -257,7 +341,9 @@ useEffect(() => {
             alt={selectedProduct.name}
           />
 
-          <h1>{selectedProduct.name}</h1>
+          <h1>
+            {selectedProduct.name}
+          </h1>
 
           <p className="rating">
             {"⭐".repeat(
@@ -355,24 +441,36 @@ useEffect(() => {
             <h2>
               Total: ${totalPrice}
             </h2>
-            
-          {/* Checkout Button */}
-          <button
-            className="checkout-button"
-            onClick={() => setShowCheckout(true)}
-          >
-            Proceed to Checkout
-          </button>
+
+            {/* Checkout Button */}
+            <button
+              className="checkout-button"
+              onClick={() =>
+                setShowCheckout(true)
+              }
+            >
+              Proceed to Checkout
+            </button>
           </>
         )}
       </div>
+
+      {/* Order Success */}
       {orderPlaced && (
         <div className="order-success">
-          <h2>🎉 Order Placed Successfully!</h2>
-          <p>Thank you for shopping with ShopSphere.</p>
+          <h2>
+            🎉 Order Placed Successfully!
+          </h2>
+
+          <p>
+            Thank you for shopping with
+            ShopSphere.
+          </p>
 
           <button
-            onClick={() => setOrderPlaced(false)}
+            onClick={() =>
+              setOrderPlaced(false)
+            }
           >
             Continue Shopping
           </button>
